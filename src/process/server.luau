@@ -9,11 +9,9 @@ local types = require(script.Parent.Parent.types)
 
 local write_packet = buffer_writer.write_packet
 
--- All ChannelState is set to nil upon being sent which is why these are all optionals
 local per_player_reliable: { [Player]: types.ChannelState } = {}
 local per_player_unreliable: { [Player]: types.ChannelState } = {}
 
--- Shared with: src/process/client.luau (Infeasible to split this into another file)
 local function create(): types.ChannelState
 	return {
 		cursor = 0,
@@ -25,24 +23,24 @@ end
 
 local function dump(channel: types.ChannelState): (buffer, { unknown }?)
 	local cursor = channel.cursor
-	local dump_buff = buffer.create(cursor)
-
-	buffer.copy(dump_buff, 0, channel.buff, 0, cursor)
-
-	return dump_buff, if #channel.references > 0 then channel.references else nil
+	if cursor == channel.size then
+		local b = channel.buff
+		channel.buff = buffer.create(channel.size)
+		return b, if #channel.references > 0 then channel.references else nil
+	else
+		local dump_buff = buffer.create(cursor)
+		buffer.copy(dump_buff, 0, channel.buff, 0, cursor)
+		return dump_buff, if #channel.references > 0 then channel.references else nil
+	end
 end
--- No longer shared
 
 local globalReliable: types.ChannelState = create()
 local globalUnreliable: types.ChannelState = create()
 
--- TODO handle invalid data better
 local function on_server_event(player: Player, data, references)
-	-- Only accept buffer data
 	if not (typeof(data) == "buffer") then
 		return
 	end
-
 	read(data, references, player)
 end
 
@@ -50,7 +48,6 @@ local function player_added(player)
 	if not per_player_reliable[player] then
 		per_player_reliable[player] = create()
 	end
-
 	if not per_player_unreliable[player] then
 		per_player_unreliable[player] = create()
 	end
@@ -107,7 +104,6 @@ function server.start()
 	end)
 
 	RunService.Heartbeat:Connect(function()
-		-- Check if the channel has anything before trying to send it
 		if globalReliable.cursor > 0 then
 			local b, r = dump(globalReliable)
 			reliableRemote:FireAllClients(b, r)

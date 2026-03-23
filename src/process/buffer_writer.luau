@@ -1,3 +1,6 @@
+--!native
+--!optimize 2
+
 local channel_state = require(script.Parent.channel_state)
 
 local function alloc(amount: number)

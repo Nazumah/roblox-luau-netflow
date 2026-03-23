@@ -1,14 +1,8 @@
+--!native
+--!optimize 2
+
+local alloc = require(script.Parent.Parent.process.alloc)
 local channel_state = require(script.Parent.Parent.process.channel_state)
-
-local function alloc(amount: number)
-	if channel_state.cursor + amount > channel_state.size then
-		channel_state.size = math.max(channel_state.size * 2, channel_state.cursor + amount)
-		local new_buff = buffer.create(channel_state.size)
-		buffer.copy(new_buff, 0, channel_state.buff, 0, channel_state.cursor)
-		channel_state.buff = new_buff
-	end
-end
-
 local types = require(script.Parent.Parent.types)
 
 local vec3 = {
@@ -21,12 +15,11 @@ local vec3 = {
 
 	write = function(value: vector)
 		alloc(12)
-		buffer.writef32(channel_state.buff, channel_state.cursor, value.x)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, value.y)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, value.z)
-		channel_state.cursor += 4
+		local c = channel_state.cursor
+		buffer.writef32(channel_state.buff, c, value.x)
+		buffer.writef32(channel_state.buff, c + 4, value.y)
+		buffer.writef32(channel_state.buff, c + 8, value.z)
+		channel_state.cursor = c + 12
 	end,
 
 	length = 12,

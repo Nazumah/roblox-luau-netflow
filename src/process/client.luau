@@ -1,3 +1,4 @@
+--!native
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -11,7 +12,6 @@ local function onClientEvent(receivedBuffer, ref)
 	read(receivedBuffer, ref)
 end
 
--- Shared with: src/process/server.luau (Infeasible to split this into another file)
 local function create(): types.ChannelState
 	return {
 		cursor = 0,
@@ -23,13 +23,16 @@ end
 
 local function dump(channel: types.ChannelState): (buffer, { unknown }?)
 	local cursor = channel.cursor
-	local dump_buffer = buffer.create(cursor)
-
-	buffer.copy(dump_buffer, 0, channel.buff, 0, cursor)
-
-	return dump_buffer, if #channel.references > 0 then channel.references else nil
+	if cursor == channel.size then
+		local b = channel.buff
+		channel.buff = buffer.create(channel.size)
+		return b, if #channel.references > 0 then channel.references else nil
+	else
+		local dump_buff = buffer.create(cursor)
+		buffer.copy(dump_buff, 0, channel.buff, 0, cursor)
+		return dump_buff, if #channel.references > 0 then channel.references else nil
+	end
 end
--- No longer shared
 
 local reliable: types.ChannelState = create()
 local unreliable: types.ChannelState = create()
@@ -52,12 +55,10 @@ function client.init()
 	unreliableRemote.OnClientEvent:Connect(onClientEvent)
 
 	RunService.Heartbeat:Connect(function()
-		-- Again, checking if there's anything in the channel before we send it.
 		if reliable.cursor > 0 then
 			local b, r = dump(reliable)
 			reliableRemote:FireServer(b, r)
 
-			-- effectively clears the channel
 			reliable.cursor = 0
 			table.clear(reliable.references)
 		end

@@ -1,3 +1,6 @@
+--!native
+--!optimize 2
+
 local types = require(script.Parent.Parent.types)
 
 type structData = {
@@ -15,8 +18,6 @@ return function<T, V>(input: T & {
 	local count = 0
 	for key in input :: any do
 		count += 1
-
-		-- Store the index-value pairs and the index-key pairs as a shortcut for serializing n all that
 		index_value_type_pairs[count] = (input :: any)[key]
 		index_key_pairs[count] = key
 	end
@@ -25,14 +26,12 @@ return function<T, V>(input: T & {
 		__T = (nil :: any) :: T,
 
 		read = function(b, cursor)
-			local constructed = table.clone(input :: any)
+			local constructed = {}
 			local struct_cursor = cursor
 
 			for index, value_type in index_value_type_pairs do
 				local value, length = value_type.read(b, struct_cursor)
-
 				constructed[index_key_pairs[index]] = value
-
 				struct_cursor += length
 			end
 

@@ -1,14 +1,8 @@
+--!native
+--!optimize 2
+
+local alloc = require(script.Parent.Parent.process.alloc)
 local channel_state = require(script.Parent.Parent.process.channel_state)
-
-local function alloc(amount: number)
-	if channel_state.cursor + amount > channel_state.size then
-		channel_state.size = math.max(channel_state.size * 2, channel_state.cursor + amount)
-		local new_buff = buffer.create(channel_state.size)
-		buffer.copy(new_buff, 0, channel_state.buff, 0, channel_state.cursor)
-		channel_state.buff = new_buff
-	end
-end
-
 local types = require(script.Parent.Parent.types)
 
 local cframe: types.DataType<CFrame> = {
@@ -24,24 +18,20 @@ local cframe: types.DataType<CFrame> = {
 
 		return CFrame.new(x, y, z) * CFrame.Angles(rx, ry, rz), 24
 	end,
+
 	write = function(value: CFrame)
 		local x, y, z = value.X, value.Y, value.Z
 		local rx, ry, rz = value:ToEulerAnglesXYZ()
 
-		-- Math done, write it now
 		alloc(24)
-		buffer.writef32(channel_state.buff, channel_state.cursor, x)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, y)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, z)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, rx)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, ry)
-		channel_state.cursor += 4
-		buffer.writef32(channel_state.buff, channel_state.cursor, rz)
-		channel_state.cursor += 4
+		local c = channel_state.cursor
+		buffer.writef32(channel_state.buff, c, x)
+		buffer.writef32(channel_state.buff, c + 4, y)
+		buffer.writef32(channel_state.buff, c + 8, z)
+		buffer.writef32(channel_state.buff, c + 12, rx)
+		buffer.writef32(channel_state.buff, c + 16, ry)
+		buffer.writef32(channel_state.buff, c + 20, rz)
+		channel_state.cursor = c + 24
 	end,
 }
 
