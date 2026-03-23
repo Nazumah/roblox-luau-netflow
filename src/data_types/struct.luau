@@ -1,32 +1,41 @@
 --!native
 --!optimize 2
 
+local alloc = require(script.Parent.Parent.process.alloc)
 local types = require(script.Parent.Parent.types)
-
-type structData = {
-	[string]: number,
-}
 
 return function<T, V>(input: T & {
 	[string]: types.DataType<V>,
 }): types.DataType<T>
-	local index_value_type_pairs: {
-		[number]: types.DataType<any>,
-	} = {}
-	local index_key_pairs: { [number]: string } = {}
-
 	local count = 0
-	for key in input :: any do
+	for _ in input :: any do
 		count += 1
-		index_value_type_pairs[count] = (input :: any)[key]
-		index_key_pairs[count] = key
+	end
+
+	local index_value_type_pairs = table.create(count)
+	local index_key_pairs = table.create(count)
+
+	local fixed_size = 0
+	local all_fixed = true
+
+	local i = 0
+	for key in input :: any do
+		i += 1
+		local vt = (input :: any)[key]
+		index_value_type_pairs[i] = vt
+		index_key_pairs[i] = key
+		if vt.length then
+			fixed_size += vt.length
+		else
+			all_fixed = false
+		end
 	end
 
 	return {
 		__T = (nil :: any) :: T,
 
 		read = function(b, cursor)
-			local constructed = {}
+			local constructed = table.create(count)
 			local struct_cursor = cursor
 
 			for index, value_type in index_value_type_pairs do
@@ -39,9 +48,15 @@ return function<T, V>(input: T & {
 		end,
 
 		write = function(struct_value)
+			-- Pre-alloc all fixed-size fields at once to prevent mid-write reallocs
+			if fixed_size > 0 then
+				alloc(fixed_size)
+			end
 			for index, value_type in index_value_type_pairs do
 				value_type.write(struct_value[index_key_pairs[index]])
 			end
 		end,
+
+		length = if all_fixed then fixed_size else nil,
 	}
 end

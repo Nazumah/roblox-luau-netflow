@@ -1,5 +1,7 @@
---!optimize 2
 --!native
+--!optimize 2
+
+local bandwidth = require(script.Parent.bandwidth)
 local packetIDs = require(script.Parent.packet_ids)
 local readRefs = require(script.Parent.readRefs)
 
@@ -25,15 +27,35 @@ end
 
 local function read(incoming_buff: buffer, references: { [number]: unknown }?, player: Player?)
 	local length = buffer.len(incoming_buff)
-	local read_cursor = 0
+	if length == 0 then
+		return
+	end
 
+	bandwidth.record_in(length)
 	readRefs.set(references)
 
+	local read_cursor = 0
+
 	while read_cursor < length do
-		local packet = ref[buffer.readu8(incoming_buff, read_cursor)]
+		local packet_id = buffer.readu8(incoming_buff, read_cursor)
 		read_cursor += 1
 
-		local value, value_len = packet.reader(incoming_buff, read_cursor)
+		local packet = ref[packet_id]
+		if not packet then
+			warn(`[NetFlow] Unknown packet ID {packet_id}, discarding remaining {length - read_cursor} bytes`)
+			break
+		end
+
+		local ok, value, value_len = pcall(packet.reader, incoming_buff, read_cursor)
+		if not ok then
+			warn(`[NetFlow] Deserialization error on packet {packet_id}: {value}`)
+			break
+		end
+
+		if type(value_len) ~= "number" or value_len < 0 then
+			warn(`[NetFlow] Invalid read length from packet {packet_id}: {value_len}`)
+			break
+		end
 
 		read_cursor += value_len
 

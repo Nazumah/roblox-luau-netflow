@@ -1,3 +1,6 @@
+--!native
+--!optimize 2
+
 local types = require(script.Parent.Parent.types)
 
 local channel_state: types.ChannelState = {

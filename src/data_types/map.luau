@@ -7,45 +7,48 @@ local types = require(script.Parent.Parent.types)
 
 local function map(keyType: types.DataType<any>, valueType: types.DataType<any>): types.DataType<{ [any]: any }>
 	local key_write = keyType.write
+	local key_read = keyType.read
 	local value_write = valueType.write
+	local value_read = valueType.read
 
 	return {
 		__T = (nil :: any) :: { [any]: any },
 
 		read = function(b: buffer, cursor: number)
-			local map = {}
+			local result = {}
 			local mapCursor = cursor
 
 			local mapLength = buffer.readu16(b, mapCursor)
 			mapCursor += 2
 
 			for _ = 1, mapLength do
-				local key, keyLength = keyType.read(b, mapCursor)
+				local key, keyLength = key_read(b, mapCursor)
 				mapCursor += keyLength
 
-				local value, valueLength = valueType.read(b, mapCursor)
+				local value, valueLength = value_read(b, mapCursor)
 				mapCursor += valueLength
 
-				map[key] = value
+				result[key] = value
 			end
 
-			return map, mapCursor - cursor
+			return result, mapCursor - cursor
 		end,
 
-		write = function(map: any)
+		write = function(data: any)
+			-- Reserve 2 bytes for length, write placeholder
+			alloc(2)
+			local lengthOffset = channel_state.cursor
+			channel_state.cursor += 2
+
 			local count = 0
-			for _ in map do
+			for k, v in data do
+				key_write(k)
+				value_write(v)
 				count += 1
 			end
 
-			alloc(2)
-			buffer.writeu16(channel_state.buff, channel_state.cursor, count)
-			channel_state.cursor += 2
-
-			for k, v in map do
-				key_write(k)
-				value_write(v)
-			end
+			-- Write real count back to placeholder
+			buffer.writeu16(channel_state.buff, lengthOffset, count)
 		end,
 	}
 end

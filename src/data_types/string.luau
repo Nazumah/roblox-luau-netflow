@@ -14,7 +14,7 @@ local str = {
 	end,
 
 	write = function(data: string)
-		local length = string.len(data)
+		local length = #data
 		alloc(2 + length)
 		local c = channel_state.cursor
 		buffer.writeu16(channel_state.buff, c, length)

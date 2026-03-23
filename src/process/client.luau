@@ -2,37 +2,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local bandwidth = require(script.Parent.bandwidth)
 local buffer_writer = require(script.Parent.buffer_writer)
+local channel = require(script.Parent.channel)
 local read = require(script.Parent.read)
 local types = require(script.Parent.Parent.types)
 
 local write_packet = buffer_writer.write_packet
-
-local function onClientEvent(receivedBuffer, ref)
-	read(receivedBuffer, ref)
-end
-
-local function create(): types.ChannelState
-	return {
-		cursor = 0,
-		size = 256,
-		references = {},
-		buff = buffer.create(256),
-	}
-end
-
-local function dump(channel: types.ChannelState): (buffer, { unknown }?)
-	local cursor = channel.cursor
-	if cursor == channel.size then
-		local b = channel.buff
-		channel.buff = buffer.create(channel.size)
-		return b, if #channel.references > 0 then channel.references else nil
-	else
-		local dump_buff = buffer.create(cursor)
-		buffer.copy(dump_buff, 0, channel.buff, 0, cursor)
-		return dump_buff, if #channel.references > 0 then channel.references else nil
-	end
-end
+local flush = channel.flush
+local create = channel.create
 
 local reliable: types.ChannelState = create()
 local unreliable: types.ChannelState = create()
@@ -48,27 +26,25 @@ function client.send_unreliable(id: number, writer: (value: any) -> (), data: an
 end
 
 function client.init()
-	local reliableRemote = ReplicatedStorage:WaitForChild("ByteNetReliable")
-	reliableRemote.OnClientEvent:Connect(onClientEvent)
+	local reliableRemote = ReplicatedStorage:WaitForChild("NetFlowReliable")
+	reliableRemote.OnClientEvent:Connect(function(receivedBuffer, ref)
+		read(receivedBuffer, ref)
+	end)
 
-	local unreliableRemote = ReplicatedStorage:WaitForChild("ByteNetUnreliable")
-	unreliableRemote.OnClientEvent:Connect(onClientEvent)
+	local unreliableRemote = ReplicatedStorage:WaitForChild("NetFlowUnreliable")
+	unreliableRemote.OnClientEvent:Connect(function(receivedBuffer, ref)
+		read(receivedBuffer, ref)
+	end)
 
 	RunService.Heartbeat:Connect(function()
 		if reliable.cursor > 0 then
-			local b, r = dump(reliable)
-			reliableRemote:FireServer(b, r)
-
-			reliable.cursor = 0
-			table.clear(reliable.references)
+			bandwidth.record_out(reliable.cursor)
+			reliableRemote:FireServer(flush(reliable))
 		end
 
 		if unreliable.cursor > 0 then
-			local b, r = dump(unreliable)
-			unreliableRemote:FireServer(b, r)
-
-			unreliable.cursor = 0
-			table.clear(unreliable.references)
+			bandwidth.record_out(unreliable.cursor)
+			unreliableRemote:FireServer(flush(unreliable))
 		end
 	end)
 end

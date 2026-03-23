@@ -1,5 +1,6 @@
 --!native
 --!optimize 2
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
@@ -9,64 +10,88 @@ local server = require(script.Parent.Parent.process.server)
 
 local run_context: "server" | "client" = if RunService:IsServer() then "server" else "client"
 
---[[
-	We use closures here instead of metatables for performance
-	It's just faster to use closures than metatables
-]]
+-- Single shared frame counter for rate limiting across all packets
+local current_frame = 0
+RunService.Heartbeat:Connect(function()
+	current_frame += 1
+end)
+
 return function(props: types.PacketProps<types.DataType<any>>, id: number)
-	-- Basic properties: reliability type, "unique" which is used to get the packet ID, and set up listeners
 	local reliabilityType = props.reliability or "Reliable"
+	local max_per_frame = props.max_per_frame
 	local listeners = {}
 
-	local serverSendFunction: (player: Player, id: number, writer: (value: any) -> (), data: any) -> () = if reliabilityType
-			== "Reliable"
+	local serverSendFunction = if reliabilityType == "Reliable"
 		then server.sendPlayerReliable
 		else server.sendPlayerUnreliable
 
-	local serverSendAllFunction: (id: number, writer: (value: any) -> (), data: any) -> () = if reliabilityType
-			== "Reliable"
+	local serverSendAllFunction = if reliabilityType == "Reliable"
 		then server.sendAllReliable
 		else server.sendAllUnreliable
 
-	local clientSendFunction: (id: number, writer: (value: any) -> (), data: any) -> () = if reliabilityType
-			== "Reliable"
+	local clientSendFunction = if reliabilityType == "Reliable"
 		then client.send_reliable
 		else client.send_unreliable
 
-	-- shorcut to avoid indexxing
 	local writer = props.value.write
+
+	-- Per-packet rate limiting state
+	local last_reset_frame = 0
+	local frame_sends = 0
+
+	local function check_rate(): boolean
+		if not max_per_frame then
+			return true
+		end
+		if current_frame ~= last_reset_frame then
+			frame_sends = 0
+			last_reset_frame = current_frame
+		end
+		if frame_sends >= max_per_frame then
+			return false
+		end
+		frame_sends += 1
+		return true
+	end
 
 	local exported = {}
 
-	-- RunContext error checking that doesn't have performance drawbacks
 	setmetatable(exported, {
 		__index = function(_self, index)
-			if	
+			if
 				(index == "sendTo" or index == "sendToAllExcept" or index == "sendToAll")
 				and run_context == "client"
 			then
-				error("You cannot use sendTo, sendToAllExcept, or sendToAll on the client")
+				error("[NetFlow] sendTo/sendToAllExcept/sendToAll are server-only APIs")
 			elseif index == "send" and run_context == "server" then
-				error("You cannot use send on the server")
+				error("[NetFlow] send is a client-only API")
 			end
 		end,
 	})
 
-	-- exposed for the reader file
 	exported.reader = props.value.read
 
 	if run_context == "server" then
 		function exported.sendToList(data, players: { Player })
+			if not check_rate() then
+				return
+			end
 			for _, player in players do
 				serverSendFunction(player, id, writer, data)
 			end
 		end
 
 		function exported.sendTo(data, player: Player)
+			if not check_rate() then
+				return
+			end
 			serverSendFunction(player, id, writer, data)
 		end
 
 		function exported.sendToAllExcept(data, except: Player)
+			if not check_rate() then
+				return
+			end
 			for _, player: Player in Players:GetPlayers() do
 				if player ~= except then
 					serverSendFunction(player, id, writer, data)
@@ -75,35 +100,60 @@ return function(props: types.PacketProps<types.DataType<any>>, id: number)
 		end
 
 		function exported.sendToAll(data)
+			if not check_rate() then
+				return
+			end
 			serverSendAllFunction(id, writer, data)
 		end
 	elseif run_context == "client" then
 		function exported.send(data)
+			if not check_rate() then
+				return
+			end
 			clientSendFunction(id, writer, data)
 		end
 	end
 
 	function exported.wait()
-		-- define it up here so we can use it to disconnect
-		local index: number
-
 		local runningThread = coroutine.running()
-		table.insert(listeners,function(data, player)
+		local fn
+		fn = function(data, player)
+			local idx = table.find(listeners, fn)
+			if idx then
+				table.remove(listeners, idx)
+			end
 			task.spawn(runningThread, data, player)
-
-			-- Disconnects the listener
-			table.remove(listeners, index)
-		end)
-
-		-- we connected, time to set the index for when we need to disconnect.
-		index = #listeners
-
-		-- the listener will resume the thread
+		end
+		table.insert(listeners, fn)
 		return coroutine.yield()
+	end
+
+	function exported.once(callback)
+		local fn
+		fn = function(data, player)
+			local idx = table.find(listeners, fn)
+			if idx then
+				table.remove(listeners, idx)
+			end
+			callback(data, player)
+		end
+		table.insert(listeners, fn)
+		return function()
+			local idx = table.find(listeners, fn)
+			if idx then
+				table.remove(listeners, idx)
+			end
+		end
 	end
 
 	function exported.listen(callback)
 		table.insert(listeners, callback)
+		return function()
+			local idx = table.find(listeners, callback)
+			if idx then
+				table.remove(listeners, idx)
+			end
+		end
 	end
 
 	function exported.getListeners()
