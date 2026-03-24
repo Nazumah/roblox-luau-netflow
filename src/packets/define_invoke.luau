@@ -8,7 +8,7 @@ local define_packet = require(script.Parent.define_packet)
 local struct = require(script.Parent.Parent.data_types.struct)
 local uint16 = require(script.Parent.Parent.data_types.uint16)
 local types = require(script.Parent.Parent.types)
-local Async = require(script.Parent.Parent.Async)
+local Async = require(script.Parent.Parent.TypeAsync)
 
 local run_context: "server" | "client" = if RunService:IsServer() then "server" else "client"
 

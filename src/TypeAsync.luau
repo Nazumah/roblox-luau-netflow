@@ -1,11 +1,18 @@
 --!optimize 2
 --!strict
 
-local Packages = script.Parent.Parent.Parent.Parent
-local Async: any = if Packages:FindFirstChild("Async")
-	then (require :: any)(Packages.Async)
-	elseif script.Parent.Parent:FindFirstChild("Async") then (require :: any)(script.Parent.Parent.Async)
-	else nil
+local Async: any = nil
+
+if script.Parent:FindFirstChild("Async") then
+	Async = (require :: any)(script.Parent.Async)
+elseif script.Parent.Parent:FindFirstChild("Async") then
+	Async = (require :: any)(script.Parent.Parent.Async)
+else
+	local Packages = script.Parent.Parent.Parent.Parent
+	if Packages and Packages:FindFirstChild("Async") then
+		Async = (require :: any)(Packages.Async)
+	end
+end
 
 export type Status = "Started" | "Resolved" | "Rejected" | "Cancelled"
 
