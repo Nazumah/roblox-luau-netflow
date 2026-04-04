@@ -4,12 +4,12 @@
 
 ## Why NetFlow?
 
-Standard `RemoteEvent` serialization in Roblox can be a bottleneck for complex games. NetFlow overcomes these limitations by:
+Standard `RemoteEvent` serialization in Roblox is often a major bottleneck. NetFlow delivers up to **3.3x lower bandwidth usage** and faster processing by:
 
--   **Reducing Bandwidth**: Using custom types like `varint`, `float16`, and quantized vectors (`vec3q`) to pack data into the smallest possible byte representation.
--   **Blazing Fast Performance**: Direct buffer manipulation avoids the overhead of table traversal and transformation.
--   **Type Safety**: Catch data format issues early with pre-defined packet structures.
--   **Bandwidth Insight**: Real-time bandwidth monitoring to track exactly how much data your game is sending and receiving.
+-   **Binary Serialization**: Pack data into bits and bytes instead of expensive Roblox variants.
+-   **Zero-Copy Logic**: Direct buffer manipulation avoids the overhead of table creation.
+-   **Strict Schemas**: Define exactly how your data is structured for maximum efficiency.
+-   **Stable Identification**: Namespaced packets use 2-byte hashes instead of long strings.
 
 ## Installation
 
@@ -17,28 +17,27 @@ Standard `RemoteEvent` serialization in Roblox can be a bottleneck for complex g
 Add the dependency to your `wally.toml`:
 ```toml
 [dependencies]
-NetFlow = "nazumah/roblox-luau-netflow@0.1.0"
+NetFlow = "nazumah/netflow@1.7.0"
 ```
-
-### Rojo
-You can also clone this repository and include the `src` folder in your project.
 
 ## Quick Start
 
-### 1. Initialize and Define Packets
-Create a shared module to define your network packets.
-
+### 1. Define Namespaced Packets
 ```lua
 local Net = require(path.to.NetFlow)
 
+-- Create a namespace for your feature
+local ns = Net.namespace("UnitSystem")
+
+-- Define packets with precise types
 local Packets = {
-    PlayerUpdate = Net.define_packet({
-        reliability = "Unreliable",
+    PositionUpdate = ns("Update", {
         value = Net.t.struct({
-            Position = Net.t.vec3,
-            Health = Net.t.uint8,
-        })
-    })(1), -- Unique ID
+            Id = Net.t.uint32,
+            Pos = Net.t.vec3,
+        }),
+        reliability = "Unreliable",
+    })
 }
 
 return Packets
@@ -48,9 +47,9 @@ return Packets
 ```lua
 local Packets = require(path.to.Packets)
 
-Packets.PlayerUpdate.sendToAll({
-    Position = Vector3.new(10, 20, 30),
-    Health = 100
+Packets.PositionUpdate.sendToAll({
+    Id = 12345,
+    Pos = Vector3.new(10, 20, 30)
 })
 ```
 
@@ -58,17 +57,12 @@ Packets.PlayerUpdate.sendToAll({
 ```lua
 local Packets = require(path.to.Packets)
 
-Packets.PlayerUpdate.listen(function(data)
-    print("Received update:", data.Position, data.Health)
+Packets.PositionUpdate.listen(function(data)
+    print("Unit", data.Id, "moved to", data.Pos)
 end)
 ```
 
 ## Documentation
-
-For more detailed information, check out the [docs](docs/) directory:
-
--   [Why Use NetFlow?](docs/WhyUseNetFlow.md)
--   [Supported Data Types](docs/DataTypes.md)
-
-## License
-Licensed under the MIT License.
+- [Why Use NetFlow?](docs/WhyUseNetFlow.md)
+- [Supported Data Types](docs/DataTypes.md)
+- [API Reference](docs/API.md)
