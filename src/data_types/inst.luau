@@ -11,25 +11,25 @@ return function(): types.DataType<Instance?>
 		__T = (nil :: any) :: Instance?,
 
 		write = function(value)
-			alloc(1)
+			alloc(2)
 			table.insert(channel_state.references, value)
-			buffer.writeu8(channel_state.buff, channel_state.cursor, #channel_state.references)
-			channel_state.cursor += 1
+			buffer.writeu16(channel_state.buff, channel_state.cursor, #channel_state.references)
+			channel_state.cursor += 2
 		end,
 
 		read = function(b: buffer, cursor: number)
 			local refs = readRefs.getAll()
 
 			if not refs then
-				return nil, 1
+				return nil, 2
 			end
 
-			local ref = refs[buffer.readu8(b, cursor)]
+			local ref = refs[buffer.readu16(b, cursor)]
 
 			if typeof(ref) == "Instance" then
-				return ref, 1
+				return ref, 2
 			else
-				return nil, 1
+				return nil, 2
 			end
 		end,
 	}

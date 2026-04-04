@@ -11,20 +11,20 @@ local function unknown(): types.DataType<unknown>
 		__T = (nil :: any) :: unknown,
 
 		write = function(value: unknown)
-			alloc(1)
+			alloc(2)
 			table.insert(channel_state.references, value)
-			buffer.writeu8(channel_state.buff, channel_state.cursor, #channel_state.references)
-			channel_state.cursor += 1
+			buffer.writeu16(channel_state.buff, channel_state.cursor, #channel_state.references)
+			channel_state.cursor += 2
 		end,
 
 		read = function(b: buffer, cursor: number)
 			local refs = read_refs.getAll()
 
 			if not refs then
-				return nil, 1
+				return nil, 2
 			end
 
-			return refs[buffer.readu8(b, cursor)], 1
+			return refs[buffer.readu16(b, cursor)], 2
 		end,
 	}
 end

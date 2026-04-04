@@ -35,18 +35,26 @@ local function map(keyType: types.DataType<any>, valueType: types.DataType<any>)
 		end,
 
 		write = function(data: any)
-			alloc(2)
-			local lengthOffset = channel_state.cursor
-			channel_state.cursor += 2
-
+			local keys = {}
 			local count = 0
-			for k, v in data do
-				key_write(k)
-				value_write(v)
+			for k in data do
 				count += 1
+				table.insert(keys, k)
 			end
 
+			pcall(function()
+				table.sort(keys)
+			end)
+
+			alloc(2)
+			local lengthOffset = channel_state.cursor
 			buffer.writeu16(channel_state.buff, lengthOffset, count)
+			channel_state.cursor += 2
+
+			for _, k in ipairs(keys) do
+				key_write(k)
+				value_write(data[k])
+			end
 		end,
 	}
 end

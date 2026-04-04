@@ -11,19 +11,14 @@ local color3 = {
 	write = function(input: Color3)
 		alloc(3)
 		local c = channel_state.cursor
-		buffer.writeu8(channel_state.buff, c, input.R * 255)
-		buffer.writeu8(channel_state.buff, c + 1, input.G * 255)
-		buffer.writeu8(channel_state.buff, c + 2, input.B * 255)
+		buffer.writeu8(channel_state.buff, c, math.round(input.R * 255))
+		buffer.writeu8(channel_state.buff, c + 1, math.round(input.G * 255))
+		buffer.writeu8(channel_state.buff, c + 2, math.round(input.B * 255))
 		channel_state.cursor = c + 3
 	end,
 
 	read = function(b: buffer, cursor: number)
-		return Color3.fromRGB(
-			buffer.readu8(b, cursor),
-			buffer.readu8(b, cursor + 1),
-			buffer.readu8(b, cursor + 2)
-		),
-			3
+		return Color3.fromRGB(buffer.readu8(b, cursor), buffer.readu8(b, cursor + 1), buffer.readu8(b, cursor + 2)), 3
 	end,
 
 	length = 3,

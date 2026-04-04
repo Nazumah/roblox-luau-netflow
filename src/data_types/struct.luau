@@ -7,20 +7,20 @@ local types = require(script.Parent.Parent.types)
 return function<T, V>(input: T & {
 	[string]: types.DataType<V>,
 }): types.DataType<T>
-	local count = 0
-	for _ in input :: any do
-		count += 1
+	local keys = {}
+	for key in input :: any do
+		table.insert(keys, key)
 	end
+	table.sort(keys)
 
+	local count = #keys
 	local index_value_type_pairs = table.create(count)
 	local index_key_pairs = table.create(count)
 
 	local fixed_size = 0
 	local all_fixed = true
 
-	local i = 0
-	for key in input :: any do
-		i += 1
+	for i, key in ipairs(keys) do
 		local vt = (input :: any)[key]
 		index_value_type_pairs[i] = vt
 		index_key_pairs[i] = key

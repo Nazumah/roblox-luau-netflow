@@ -67,18 +67,25 @@ local function write_auto(value: any)
 		buffer.writeu8(channel_state.buff, c + 3, math.round(value.B * 255))
 		channel_state.cursor = c + 4
 	elseif t == "table" then
+		local keys = {}
 		local count = 0
-		for _ in value do
+		for k in value do
 			count += 1
+			table.insert(keys, k)
 		end
+
+		pcall(function()
+			table.sort(keys)
+		end)
+
 		alloc(3)
 		local c = channel_state.cursor
 		buffer.writeu8(channel_state.buff, c, 9)
 		buffer.writeu16(channel_state.buff, c + 1, count)
 		channel_state.cursor = c + 3
-		for k, v in value do
+		for _, k in ipairs(keys) do
 			write_auto(k)
-			write_auto(v)
+			write_auto(value[k])
 		end
 	else
 		alloc(3)

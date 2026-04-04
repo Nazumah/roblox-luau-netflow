@@ -17,7 +17,7 @@ Standard `RemoteEvent` serialization in Roblox is often a major bottleneck. NetF
 Add the dependency to your `wally.toml`:
 ```toml
 [dependencies]
-NetFlow = "nazumah/netflow@1.7.0"
+NetFlow = "nazumah/netflow@1.7.1"
 ```
 
 ## Quick Start
