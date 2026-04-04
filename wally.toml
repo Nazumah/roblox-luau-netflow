@@ -1,6 +1,6 @@
 [package]
 name = "nazumah/netflow"
-version = "1.6.0"
+version = "1.7.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
