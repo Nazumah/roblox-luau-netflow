@@ -1,0 +1,6 @@
+{
+  "name": "NetFlow",
+  "tree": {
+    "$path": "src"
+  }
+}
