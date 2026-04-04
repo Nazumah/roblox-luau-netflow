@@ -10,8 +10,10 @@ local color3 = require(script.data_types.color3)
 local client = require(script.process.client)
 local define_packet = require(script.packets.define_packet)
 local define_invoke = require(script.packets.define_invoke)
+local namespace = require(script.namespaces.namespace)
 local enum_type = require(script.data_types.enum_type)
 local float16 = require(script.data_types.float16)
+
 local float32 = require(script.data_types.float32)
 local float64 = require(script.data_types.float64)
 local inst = require(script.data_types.inst)
@@ -33,6 +35,7 @@ local varint = require(script.data_types.varint)
 local vec2 = require(script.data_types.vec2)
 local vec3 = require(script.data_types.vec3)
 local vec3q = require(script.data_types.vec3q)
+local middleware = require(script.process.middleware)
 
 local bandwidth = require(script.process.bandwidth)
 
@@ -45,6 +48,8 @@ end
 return table.freeze({
 	define_packet = define_packet,
 	define_invoke = define_invoke,
+	namespace = namespace,
+	middleware = middleware,
 	bandwidth = bandwidth,
 
 	t = table.freeze({
@@ -53,6 +58,8 @@ return table.freeze({
 		struct = struct,
 		tuple = tuple,
 		optional = optional,
+
+		auto = require(script.data_types.auto)(),
 
 		bool = bool(),
 		uint8 = uint8(),
@@ -64,6 +71,7 @@ return table.freeze({
 		float32 = float32(),
 		float64 = float64(),
 		string = string(),
+		string_interned = require(script.data_types.string_interned)(),
 		buff = buff(),
 		nothing = nothing(),
 		unknown = unknown(),

@@ -4,11 +4,13 @@
 local bandwidth = require(script.Parent.bandwidth)
 local packetIDs = require(script.Parent.packet_ids)
 local readRefs = require(script.Parent.readRefs)
+local freeThread = require(script.Parent.freeThread)
+local middleware = require(script.Parent.middleware)
 
 local ref = packetIDs.ref()
 
 local function run_listener(fn, ...)
-	task.spawn(fn, ...)
+	freeThread(fn, ...)
 end
 
 local function read(incoming_buff: buffer, references: { [number]: unknown }?, player: Player?)
@@ -45,9 +47,11 @@ local function read(incoming_buff: buffer, references: { [number]: unknown }?, p
 
 		read_cursor += value_len
 
-		local listeners = packet.getListeners()
-		for _, listener in table.clone(listeners) do
-			run_listener(listener, value, player)
+		if middleware.runIncoming(packet_id, value, player) then
+			local listeners = packet.getListeners()
+			for _, listener in table.clone(listeners) do
+				run_listener(listener, value, player)
+			end
 		end
 	end
 end

@@ -22,9 +22,13 @@ Instead of using a fixed 8 bytes for every number, `varint` allows small numbers
 *   **`float16`**: Uses 2 bytes instead of 4 for decimal data.
 *   **`vec3q`, `cframeq`**: Applies quantization techniques to compress position and rotation info by more than 50%.
 *   **`bitfield`**: Packs multiple booleans into a single byte.
+*   **`string_interned`**: Sends the full string only once and uses a tiny index for subsequent sends.
 
-### 4. Strong Type Safety
-By pre-defining packet structures, you can ensure that only valid data is sent and received, preventing crashes and bugs early in development.
+### 4. Zero-Allocation Response Processing (Thread Pooling)
+NetFlow uses a custom coroutine reuse system (`freeThread`) to process incoming packets. This prevents the constant memory allocation and Garbage Collection (GC) spikes common in other libraries that use `task.spawn` for every packet.
+
+### 5. Stable Network Namespacing
+Hashed string-based namespaces allow for automatic ID generation and collision-free organization across server and client.
 
 ## Code Comparison (Before & After)
 
@@ -42,18 +46,19 @@ RemoteEvent:FireAllClients({
 ### Using NetFlow
 ```lua
 local Net = require(path.to.NetFlow)
+local PlayerNamespace = Net.namespace("Players")
 
--- Define the packet structure once
-local PlayerUpdate = Net.define_packet({
+-- Define the packet via a namespace (Automatic IDs)
+local PlayerUpdate = PlayerNamespace("Update", {
     value = Net.t.struct({
         Position = Net.t.vec3,
         Health = Net.t.uint8,
         IsActive = Net.t.bool,
-        Name = Net.t.string
+        Name = Net.t.string_interned -- Uses caching for name strings
     })
-})(1) -- Assign packet ID
+})
 
--- Transmit with minimal bandwidth cost
+-- Transmit with minimal bandwidth and CPU cost
 PlayerUpdate.sendToAll({
     Position = Vector3.new(10, 20, 30),
     Health = 100,

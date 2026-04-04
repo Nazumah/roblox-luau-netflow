@@ -2,8 +2,13 @@
 --!optimize 2
 
 local channel_state = require(script.Parent.channel_state)
+local middleware = require(script.Parent.middleware)
 
-local function write_packet(state, id, writer, data)
+local function write_packet(state, id, writer, data, player: Player?)
+	if not middleware.runOutgoing(id, data, player) then
+		return state
+	end
+
 	channel_state.buff = state.buff
 	channel_state.cursor = state.cursor
 	channel_state.size = state.size

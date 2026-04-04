@@ -59,6 +59,8 @@ These types are specifically designed for games to minimize network footprint.
 | `vec3q` | Quantized Vector3 | Compressed position data. |
 | `cframeq` | Quantized CFrame | Compressed rotation/translation data. |
 | `bitfield` | Bit-packed booleans | Pack up to 8 booleans into 1 byte. |
+| `string_interned` | Cached String | Sends the full string only once, and uses a tiny index for subsequent sends. |
+| `auto` | Dynamic Type | Automatically detects the type of the value at runtime. Supports primitives, Roblox types, and recursive tables. Has overhead. |
 
 ## Roblox Types
 
