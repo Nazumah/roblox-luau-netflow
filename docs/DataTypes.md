@@ -1,8 +1,3 @@
----
-sidebar_position: 2
-title: Supported Data Types
----
-
 # Supported Data Types
 
 NetFlow provides a wide range of highly efficient data types to ensure that your packets use as little bandwidth as possible. The types are available under the `t` table of the module.

@@ -1,8 +1,3 @@
----
-sidebar_position: 1
-title: Why Use NetFlow?
----
-
 # Why Use NetFlow?
 
 When developing large-scale projects in Roblox, one of the most common bottlenecks is **Network Bandwidth** and **Latency**. The default `RemoteEvent` is extremely convenient but incurs significant overhead when transmitting complex data.
