@@ -15,42 +15,42 @@ These are the fundamental building blocks for your network packets.
 | `string` | UTF-8 string | Dynamic |
 | `buff` | Raw Luau buffer | Dynamic |
 | `nothing` | Represents a `nil` value | 0 bytes |
-| `unknown` | For values with unknown types | Dynamic |
+| `unknown` | For values with unknown types (using Roblox serialization) | 1 byte in buffer + Type Size |
 
 ## Complex Types
 
 You can combine primitives to create more complex data structures.
 
-### `struct`
-A collection of named fields with defined types. Useful for sending objects.
+### `struct(spec: table)`
+A structure (struct) is a collection of named fields with defined types. **Use this instead of `t.table`.**
+It is the most common complex type used in schemas.
 ```lua
 Net.t.struct({
-    Id = Net.t.uint16,
-    Name = Net.t.string
+    Id = Net.t.uint32,
+    Name = Net.t.string,
+    Position = Net.t.vec3
 })
 ```
 
-### `array`
+### `array(type: DataType)`
 A list of elements of the same type.
 ```lua
 Net.t.array(Net.t.uint32)
 ```
 
-### `map`
+### `map(key: DataType, value: DataType)`
 A set of key-value pairs.
 ```lua
 Net.t.map(Net.t.string, Net.t.uint8)
 ```
 
-### `optional`
+### `optional(type: DataType)`
 Represents a value that might be `nil`.
 ```lua
 Net.t.optional(Net.t.vec3)
 ```
 
 ## Optimized Types
-
-These types are specifically designed for games to minimize network footprint.
 
 | Type | Description | Optimization |
 | :--- | :--- | :--- |
@@ -59,7 +59,7 @@ These types are specifically designed for games to minimize network footprint.
 | `vec3q` | Quantized Vector3 | Compressed position data. |
 | `cframeq` | Quantized CFrame | Compressed rotation/translation data. |
 | `bitfield` | Bit-packed booleans | Pack up to 8 booleans into 1 byte. |
-| `string_interned` | Cached String | Sends the full string only once, and uses a tiny index for subsequent sends. |
+| `string_interned` | Cached String | Sends the full string only once, uses a tiny index for subsequent sends. |
 | `auto` | Dynamic Type | Automatically detects the type of the value at runtime. Supports primitives, Roblox types, and recursive tables. Has overhead. |
 
 ## Roblox Types
@@ -70,7 +70,7 @@ NetFlow supports standard Roblox engine types for convenience.
 *   `cframe`: Roblox CFrame.
 *   `color3`: Roblox Color3.
 *   `vec2`: Roblox Vector2.
-*   `vec3`: Roblox Vector3.
+*   `vec3`: Roblox Vector3 (use `t.vec3`, not `t.vector3`).
 
 ## Example Usage
 
