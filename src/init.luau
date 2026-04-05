@@ -92,6 +92,61 @@ local Module = {
 	}),
 }
 
+export type DataType<T> = {
+	__T: T,
+	write: (value: T) -> (),
+	read: (b: buffer, cursor: number) -> (T, number),
+}
+
+type DataTypes = {
+	array: <T>(elementType: DataType<T>) -> DataType<{ T }>,
+	map: <K, V>(keyType: DataType<K>, valueType: DataType<V>) -> DataType<{ [K]: V }>,
+	struct: <T>(fields: T) -> DataType<any>,
+	tuple: (...DataType<any>) -> DataType<{ any }>,
+	optional: <T>(inner: DataType<T>) -> DataType<T?>,
+	auto: DataType<any>,
+	bool: DataType<boolean>,
+	uint8: DataType<number>,
+	uint16: DataType<number>,
+	uint32: DataType<number>,
+	int8: DataType<number>,
+	int16: DataType<number>,
+	int32: DataType<number>,
+	float32: DataType<number>,
+	float64: DataType<number>,
+	float16: (scale: number, signed: boolean?) -> DataType<number>,
+	string: DataType<string>,
+	string_interned: DataType<string>,
+	buff: DataType<buffer>,
+	nothing: DataType<nil>,
+	unknown: DataType<any>,
+	inst: DataType<Instance>,
+	cframe: DataType<CFrame>,
+	color3: DataType<Color3>,
+	vec2: DataType<Vector2>,
+	vec3: DataType<Vector3>,
+	varint: DataType<number>,
+	varsint: DataType<number>,
+	vec3q: (min: number?, max: number?) -> DataType<Vector3>,
+	cframeq: (posMin: number?, posMax: number?) -> DataType<CFrame>,
+	enum: <T>(choices: { T }) -> DataType<T>,
+	bitfield: (fields: { [string]: number }) -> DataType<{ [string]: number }>,
+}
+
+type NetFlowLib = {
+	define_packet: <T>(props: { value: any, reliability: ("Reliable" | "Unreliable")?, max_per_frame: number? }) -> any,
+	define_invoke: <Req, Res>(props: { request: any, response: any, reliability: ("Reliable" | "Unreliable")? }) -> any,
+	namespace: (name: string) -> any,
+	middleware: {
+		addIncoming: (fn: (...any) -> boolean) -> (),
+		addOutgoing: (fn: (...any) -> boolean) -> (),
+	},
+	bandwidth: {
+		stats: { bytes_out: number, bytes_in: number, packets_out: number, packets_in: number },
+	},
+	t: DataTypes,
+}
+
 export type NetFlow_ = typeof(Module)
 
-return table.freeze(Module)
+return (table.freeze(Module) :: any) :: NetFlowLib

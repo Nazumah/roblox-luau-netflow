@@ -1,79 +1,65 @@
-# API Reference
+# NetFlow API Reference
 
-This page documents the full API surface of **NetFlow**.
+This document provides the technical specification for the **NetFlow** library.
 
-## Core Functions
+## Core API
 
-### `Net.namespace(name: string)`
-Creates a new namespace object for organizing related packets. Namespaces provide stable, hashed packet IDs automatically.
+### `Net.namespace(name: string) -> Namespace`
+Creates a new communication namespace. This provides stable, hashed identification for all packets defined within it.
 
-**Returns:** A `Namespace` callable table.
-
-### `Namespace(packetName: string, props: PacketProps)`
-Calling a namespace like a function defines a packet within that namespace.
-- If `props` has `value`, it creates a standard **Packet**.
-- If `props` has `request` and `response`, it creates an **Invoke**.
-
-```lua
-local Combat = Net.namespace("Combat")
-local DamagePacket = Combat("Damage", { value = Net.t.uint16 })
-```
+### `Namespace(name: string, props: PacketProps) -> Packet | Invoke`
+Defines a packet or remote procedure call (Invoke) within the namespace.
+- If `props` has `value`, a **Packet** is created.
+- If `props` has `request` and `response`, an **Invoke** is created.
 
 ---
 
-## Packet Methods
+## Packet Interface
 
-When you define a standard packet, it returns a `Packet` object with the following methods:
+### Server Members
+- `:sendTo(data: T, player: Player)`
+- `:sendToList(data: T, players: {Player})`
+- `:sendToAll(data: T)`
+- `:sendToAllExcept(data: T, except: Player)`
 
-### Server-Only
-- **`sendTo(data: T, player: Player)`**: Sends a packet to a specific player.
-- **`sendToList(data: T, players: {Player})`**: Sends a packet to a list of players.
-- **`sendToAll(data: T)`**: Sends a packet to everyone.
-- **`sendToAllExcept(data: T, except: Player)`**: Sends a packet to everyone except one player.
+### Client Members
+- `:send(data: T)`
 
-### Client-Only
-- **`send(data: T)`**: Sends a packet to the server.
-
-### Shared
-- **`listen(callback: (data: T, player: Player?) -> ())`**: Connects a listener function. Returns a disconnect function.
-- **`once(callback: (data: T, player: Player?) -> ())`**: Listens for the next packet then disconnects.
-- **`wait() -> (T, Player?)`**: Yields the current thread until data is received.
+### Shared Members
+- `:listen(callback: (data: T, player: Player?) -> ()) -> DisconnectFunc`
+- `:once(callback: (data: T, player: Player?) -> ()) -> DisconnectFunc`
+- `:wait() -> (T, Player?)`
 
 ---
 
-## Invoke Methods
+## Invoke Interface
 
-Defined when providing `request` and `response` schema. Used for request-response patterns.
+### Client Members
+- `:invokeServer(data: Req) -> Async<Res>`
 
-### Client-Only
-- **`invokeServer(data: Req) -> Async<Res>`**: Calls a server-side callback and waits (async) for a response.
+### Server Members
+- `:invokeClient(player: Player, data: Req) -> Async<Res>`
 
-### Server-Only
-- **`invokeClient(player: Player, data: Req) -> Async<Res>`**: Calls a client-side callback and waits for a response.
-
-### Shared
-- **`setCallback(callback: (player: Player?, data: Req) -> Res)`**: Defines the handler for incoming requests.
+### Shared Members
+- `:setCallback(callback: (player: Player?, data: Req) -> Res)`
 
 ---
 
-## Middleware
+## Middleware & Monitoring
 
-Middleware allows you to intercept every packet being sent or received.
+### `Net.middleware`
+- `addIncoming(fn: (packetId: number, data: any, player: Player?) -> boolean)`
+- `addOutgoing(fn: (packetId: number, data: any, player: Player?) -> boolean)`
 
-### `Net.middleware.addIncoming(fn: (packetId: number, data: any, player: Player?) -> boolean)`
-Adds a listener for incoming data. If the function returns `false`, the packet is dropped.
-
-### `Net.middleware.addOutgoing(fn: (packetId: number, data: any, player: Player?) -> boolean)`
-Adds a listener for outgoing data. If the function returns `false`, the packet is not sent.
+### `Net.bandwidth`
+- `get_stats() -> BandwidthStats` (Returns `bytes_in`, `bytes_out`, etc.)
 
 ---
 
-## Bandwidth Monitoring
+## Data Types (`Net.t`)
 
-### `Net.bandwidth.get_stats() -> BandwidthStats`
-Returns an object containing bandwidth usage information for the current session.
-
-```lua
-local stats = Net.bandwidth.get_stats()
-print(stats.bytes_in, stats.bytes_out)
-```
+NetFlow includes a comprehensive type-checking and serialization library:
+- **Primitives**: `uint8`, `uint16`, `uint32`, `int8`, `float32`, `string`, `bool`, etc.
+- **Spatial**: `vec2`, `vec3`, `cframe`, `color3`.
+- **Composite**: `struct`, `array`, `map`, `tuple`, `optional`.
+- **Advanced**: `bitfield`, `varint`, `float16`, `enum`.

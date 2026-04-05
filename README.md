@@ -1,84 +1,66 @@
 # NetFlow
 
-[![Wally](https://img.shields.io/badge/Wally-1.7.4-blue.svg)](https://wally.run/package/nazumah/netflow)
+[![Wally](https://img.shields.io/badge/Wally-1.7.5-blue.svg)](https://wally.run/package/nazumah/netflow)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Luau](https://img.shields.io/badge/Luau-Strict-blueviolet.svg)](https://luau-lang.org/)
 
-NetFlow is a high-performance, buffer-based networking library for Luau on Roblox. It is designed to provide ultra-low bandwidth usage and extreme serialization speeds by leveraging the power of Luau's `buffer` library.
+NetFlow is an ultra-high performance, buffer-based networking library for Luau on Roblox. By bypassing standard `RemoteEvent` serialization and using binary buffers, NetFlow achieves extreme bandwidth efficiency and processing speed.
 
 ---
 
-## Performance
+## Technical Advantages
 
-Standard `RemoteEvent` serialization in Roblox can be a major network bottleneck. NetFlow delivers up to **3.3x lower bandwidth usage** and faster processing by:
-
-- **Binary Serialization**: Pack data into bits and bytes instead of expensive Roblox variants.
-- **Zero-Copy Logic**: Direct buffer manipulation avoids the overhead of constant table creation.
-- **Strict Schemas**: Define exactly how your data is structured for maximum efficiency.
-- **Stable Identification**: Namespaced packets use 2-byte hashes instead of long strings.
+- **Hashed Namespacing**: Uses 2-byte hashes for packet identification, eliminating string overhead and providing stable IDs across server and client.
+- **Buffer-Level Control**: Direct manipulation of Luau `buffer` objects ensures zero-copy serialization for primitive and complex types.
+- **3.3x Lower Bandwidth**: Real-world benchmarks show up to 3.3x reduction in network traffic compared to standard Roblox remotes.
+- **First-Class IntelliSense**: Unlike other networking libraries, NetFlow provides explicit type exports for its entire API, including the `Net.t` type-checking library.
+- **Async Integration**: Native support for request-response patterns using the [Async](https://github.com/Nazumah/roblox-luau-async) library.
 
 ---
 
 ## Installation
 
 ### Wally
-Add the dependency to your `wally.toml`:
+Update your `wally.toml`:
 
 ```toml
 [dependencies]
-NetFlow = "nazumah/netflow@1.7.4"
-Async = "nazumah/async@1.0.3"
+NetFlow = "nazumah/netflow@1.7.5"
+Async = "nazumah/async@1.0.4"
 ```
 
 ---
 
 ## Quick Start
 
-### 1. Define Namespaced Packets
+### 1. Define a Packet
 ```lua
 local Net = require(path.to.NetFlow)
+local ns = Net.namespace("Combat")
 
--- Create a namespace for your feature
-local ns = Net.namespace("UnitSystem")
-
--- Define packets with precise types
-local Packets = {
-    PositionUpdate = ns("Update", {
-        value = Net.t.struct({
-            Id = Net.t.uint32,
-            Pos = Net.t.vec3,
-        }),
-        reliability = "Unreliable",
-    })
-}
-
-return Packets
-```
-
-### 2. Sending Data (Server)
-```lua
-local Packets = require(path.to.Packets)
-
-Packets.PositionUpdate.sendToAll({
-    Id = 12345,
-    Pos = Vector3.new(10, 20, 30)
+local DamagePacket = ns("Damage", {
+    value = Net.t.struct({
+        TargetId = Net.t.uint32,
+        Amount = Net.t.float32,
+    }),
+    reliability = "Unreliable"
 })
 ```
 
-### 3. Listening for Data (Client)
+### 2. Communicating
 ```lua
-local Packets = require(path.to.Packets)
+-- On Server
+DamagePacket.sendToAll({ TargetId = 1, Amount = 25.5 })
 
-Packets.PositionUpdate.listen(function(data)
-    print("Unit", data.Id, "moved to", data.Pos)
+-- On Client
+DamagePacket.listen(function(data)
+    print("Received damage:", data.Amount)
 end)
 ```
 
 ---
 
 ## Documentation
-
-For further technical specifications, please see:
 
 - [Why Use NetFlow?](docs/WhyUseNetFlow.md)
 - [Supported Data Types](docs/DataTypes.md)
@@ -87,4 +69,4 @@ For further technical specifications, please see:
 ---
 
 ## License
-This project is licensed under the [MIT](LICENSE) License.
+Licensed under the [MIT](LICENSE) License.

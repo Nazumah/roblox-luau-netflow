@@ -1,8 +1,8 @@
 [package]
 name = "nazumah/netflow"
-version = "1.7.4"
+version = "1.7.5"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
-Async = "nazumah/async@1.0.3"
+Async = "nazumah/async@1.0.4"

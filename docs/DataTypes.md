@@ -1,86 +1,51 @@
-# Supported Data Types
+# NetFlow Data Types (`Net.t`)
 
-NetFlow provides a wide range of highly efficient data types to ensure that your packets use as little bandwidth as possible. The types are available under the `t` table of the module.
+NetFlow provides a strictly typed serialization system designed for maximum efficiency.
 
-## Primitives
+## Atomic Types
 
-These are the fundamental building blocks for your network packets.
+| Type | Size | Description |
+|------|------|-------------|
+| `Net.t.bool` | 1 bit | Boolean value packed into bitfields. |
+| `Net.t.uint8` | 1 byte | Unsigned integer (0–255). |
+| `Net.t.uint16` | 2 bytes | Unsigned integer (0–65,535). |
+| `Net.t.uint32` | 4 bytes | Unsigned integer (0–4.29B). |
+| `Net.t.int8` | 1 byte | Signed integer (-128–127). |
+| `Net.t.int16` | 2 bytes | Signed integer (-32,768–32,767). |
+| `Net.t.int32` | 4 bytes | Signed integer (-2.14B–2.14B). |
+| `Net.t.float32` | 4 bytes | Standard precision float. |
+| `Net.t.float64` | 8 bytes | Double precision float. |
+| `Net.t.string` | Var | UTF-8 encoded string. |
 
-| Type | Description | Size |
-| :--- | :--- | :--- |
-| `uint8`, `uint16`, `uint32` | Unsigned integers | 1, 2, 4 bytes |
-| `int8`, `int16`, `int32` | Signed integers | 1, 2, 4 bytes |
-| `float32`, `float64` | Single and double precision floats | 4, 8 bytes |
-| `bool` | Boolean value | 1 bit (aligned) |
-| `string` | UTF-8 string | Dynamic |
-| `buff` | Raw Luau buffer | Dynamic |
-| `nothing` | Represents a `nil` value | 0 bytes |
-| `unknown` | For values with unknown types (using Roblox serialization) | 1 byte in buffer + Type Size |
+## Spatial Types
 
-## Complex Types
+| Type | Size | Description |
+|------|------|-------------|
+| `Net.t.vec2` | 8 bytes | Vector2 (2x float32). |
+| `Net.t.vec3` | 12 bytes | Vector3 (3x float32). |
+| `Net.t.cframe` | 48 bytes | Standard Roblox CFrame. |
+| `Net.t.color3` | 3 bytes | Color3 (packed as 8-bit RGB). |
 
-You can combine primitives to create more complex data structures.
+## Composite Types
 
-### struct(spec: table)
-A structure (struct) is a collection of named fields with defined types. Use this instead of `t.table`.
-```lua
-Net.t.struct({
-    Id = Net.t.uint32,
-    Name = Net.t.string,
-    Position = Net.t.vec3
-})
-```
+### `Net.t.struct(fields: { [string]: DataType })`
+Serializes a table with fixed keys. Keys are not sent over the wire, only values in order.
 
-### array(type: DataType)
-A list of elements of the same type.
-```lua
-Net.t.array(Net.t.uint32)
-```
+### `Net.t.array(elementType: DataType)`
+Variable length array of the specified type.
 
-### map(key: DataType, value: DataType)
-A set of key-value pairs.
-```lua
-Net.t.map(Net.t.string, Net.t.uint8)
-```
+### `Net.t.map(keyType: DataType, valueType: DataType)`
+A dictionary containing keys and values of the specified types.
 
-### optional(type: DataType)
-Represents a value that might be `nil`.
-```lua
-Net.t.optional(Net.t.vec3)
-```
+---
 
-## Optimized Types
+## Specialized Optimizations
 
-| Type | Description | Optimization |
-| :--- | :--- | :--- |
-| `varint` | Variable-length integer | Smaller numbers take fewer bytes. |
-| `float16` | Half-precision float | 2 bytes instead of 4. |
-| `vec3q` | Quantized Vector3 | Compressed position data. |
-| `cframeq` | Quantized CFrame | Compressed rotation/translation data. |
-| `bitfield` | Bit-packed booleans | Pack up to 8 booleans into 1 byte. |
-| `string_interned` | Cached String | Sends the full string only once, uses an index for subsequent sends. |
-| `auto` | Dynamic Type | Automatically detects the type of the value at runtime. Supports primitives, Roblox types, and recursive tables. Has overhead. |
+### `Net.t.bitfield(fields: { [string]: number })`
+Combines multiple boolean or small integer fields into a single byte-aligned block. Extremely efficient for state syncing.
 
-## Roblox Types
+### `Net.t.enum(choices: { string })`
+Maps strings to their indices in the array, sending only a small integer over the wire.
 
-NetFlow supports standard Roblox engine types for convenience.
-
-* `inst`: Roblox Instance reference.
-* `cframe`: Roblox CFrame.
-* `color3`: Roblox Color3.
-* `vec2`: Roblox Vector2.
-* `vec3`: Roblox Vector3.
-
-## Example Usage
-
-```lua
-local Net = require(path.to.NetFlow)
-
-local MyPacket = Net.define_packet({
-    value = Net.t.struct({
-        Players = Net.t.array(Net.t.string),
-        Score = Net.t.varint,
-        IsGameOver = Net.t.bitfield({ "WinnerFound", "Draw" })
-    })
-})(101)
-```
+### `Net.t.varint`
+Variable-length integer prefixing for optimal distribution.
