@@ -1,24 +1,36 @@
 # NetFlow
 
-**NetFlow** is a high-performance, buffer-based networking library for Luau on Roblox. It is designed to provide ultra-low bandwidth usage and extreme serialization performance by leveraging the power of Luau's `buffer` library.
+[![Wally](https://img.shields.io/badge/Wally-1.7.2-blue.svg)](https://wally.run/package/nazumah/netflow)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Luau](https://img.shields.io/badge/Luau-Strict-blueviolet.svg)](https://luau-lang.org/)
 
-## Why NetFlow?
+NetFlow is a high-performance, buffer-based networking library for Luau on Roblox. It is designed to provide ultra-low bandwidth usage and extreme serialization speeds by leveraging the power of Luau's `buffer` library.
 
-Standard `RemoteEvent` serialization in Roblox is often a major bottleneck. NetFlow delivers up to **3.3x lower bandwidth usage** and faster processing by:
+---
 
--   **Binary Serialization**: Pack data into bits and bytes instead of expensive Roblox variants.
--   **Zero-Copy Logic**: Direct buffer manipulation avoids the overhead of table creation.
--   **Strict Schemas**: Define exactly how your data is structured for maximum efficiency.
--   **Stable Identification**: Namespaced packets use 2-byte hashes instead of long strings.
+## Performance
+
+Standard `RemoteEvent` serialization in Roblox can be a major network bottleneck. NetFlow delivers up to **3.3x lower bandwidth usage** and faster processing by:
+
+- **Binary Serialization**: Pack data into bits and bytes instead of expensive Roblox variants.
+- **Zero-Copy Logic**: Direct buffer manipulation avoids the overhead of constant table creation.
+- **Strict Schemas**: Define exactly how your data is structured for maximum efficiency.
+- **Stable Identification**: Namespaced packets use 2-byte hashes instead of long strings.
+
+---
 
 ## Installation
 
 ### Wally
 Add the dependency to your `wally.toml`:
+
 ```toml
 [dependencies]
-NetFlow = "nazumah/netflow@1.7.1"
+NetFlow = "nazumah/netflow@1.7.2"
+Async = "nazumah/async@1.0.1"
 ```
+
+---
 
 ## Quick Start
 
@@ -62,7 +74,17 @@ Packets.PositionUpdate.listen(function(data)
 end)
 ```
 
+---
+
 ## Documentation
+
+For further technical specifications, please see:
+
 - [Why Use NetFlow?](docs/WhyUseNetFlow.md)
 - [Supported Data Types](docs/DataTypes.md)
 - [API Reference](docs/API.md)
+
+---
+
+## License
+This project is licensed under the [MIT](LICENSE) License.

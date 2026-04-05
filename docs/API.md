@@ -26,18 +26,18 @@ local DamagePacket = Combat("Damage", { value = Net.t.uint16 })
 When you define a standard packet, it returns a `Packet` object with the following methods:
 
 ### Server-Only
--   **`sendTo(data: T, player: Player)`**: Sends a packet to a specific player.
--   **`sendToList(data: T, players: {Player})`**: Sends a packet to a list of players.
--   **`sendToAll(data: T)`**: Sends a packet to everyone.
--   **`sendToAllExcept(data: T, except: Player)`**: Sends a packet to everyone except one player.
+- **`sendTo(data: T, player: Player)`**: Sends a packet to a specific player.
+- **`sendToList(data: T, players: {Player})`**: Sends a packet to a list of players.
+- **`sendToAll(data: T)`**: Sends a packet to everyone.
+- **`sendToAllExcept(data: T, except: Player)`**: Sends a packet to everyone except one player.
 
 ### Client-Only
--   **`send(data: T)`**: Sends a packet to the server.
+- **`send(data: T)`**: Sends a packet to the server.
 
 ### Shared
--   **`listen(callback: (data: T, player: Player?) -> ())`**: Connects a listener function. Returns a disconnect function.
--   **`once(callback: (data: T, player: Player?) -> ())`**: Listens for the next packet then disconnects.
--   **`wait() -> (T, Player?)`**: Yields the current thread until data is received.
+- **`listen(callback: (data: T, player: Player?) -> ())`**: Connects a listener function. Returns a disconnect function.
+- **`once(callback: (data: T, player: Player?) -> ())`**: Listens for the next packet then disconnects.
+- **`wait() -> (T, Player?)`**: Yields the current thread until data is received.
 
 ---
 
@@ -46,13 +46,13 @@ When you define a standard packet, it returns a `Packet` object with the followi
 Defined when providing `request` and `response` schema. Used for request-response patterns.
 
 ### Client-Only
--   **`invokeServer(data: Req) -> Async<Res>`**: Calls a server-side callback and waits (async) for a response.
+- **`invokeServer(data: Req) -> Async<Res>`**: Calls a server-side callback and waits (async) for a response.
 
 ### Server-Only
--   **`invokeClient(player: Player, data: Req) -> Async<Res>`**: Calls a client-side callback and waits for a response.
+- **`invokeClient(player: Player, data: Req) -> Async<Res>`**: Calls a client-side callback and waits for a response.
 
 ### Shared
--   **`setCallback(callback: (player: Player?, data: Req) -> Res)`**: Defines the handler for incoming requests.
+- **`setCallback(callback: (player: Player?, data: Req) -> Res)`**: Defines the handler for incoming requests.
 
 ---
 

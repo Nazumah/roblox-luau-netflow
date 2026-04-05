@@ -21,9 +21,8 @@ These are the fundamental building blocks for your network packets.
 
 You can combine primitives to create more complex data structures.
 
-### `struct(spec: table)`
-A structure (struct) is a collection of named fields with defined types. **Use this instead of `t.table`.**
-It is the most common complex type used in schemas.
+### struct(spec: table)
+A structure (struct) is a collection of named fields with defined types. Use this instead of `t.table`.
 ```lua
 Net.t.struct({
     Id = Net.t.uint32,
@@ -32,19 +31,19 @@ Net.t.struct({
 })
 ```
 
-### `array(type: DataType)`
+### array(type: DataType)
 A list of elements of the same type.
 ```lua
 Net.t.array(Net.t.uint32)
 ```
 
-### `map(key: DataType, value: DataType)`
+### map(key: DataType, value: DataType)
 A set of key-value pairs.
 ```lua
 Net.t.map(Net.t.string, Net.t.uint8)
 ```
 
-### `optional(type: DataType)`
+### optional(type: DataType)
 Represents a value that might be `nil`.
 ```lua
 Net.t.optional(Net.t.vec3)
@@ -59,18 +58,18 @@ Net.t.optional(Net.t.vec3)
 | `vec3q` | Quantized Vector3 | Compressed position data. |
 | `cframeq` | Quantized CFrame | Compressed rotation/translation data. |
 | `bitfield` | Bit-packed booleans | Pack up to 8 booleans into 1 byte. |
-| `string_interned` | Cached String | Sends the full string only once, uses a tiny index for subsequent sends. |
+| `string_interned` | Cached String | Sends the full string only once, uses an index for subsequent sends. |
 | `auto` | Dynamic Type | Automatically detects the type of the value at runtime. Supports primitives, Roblox types, and recursive tables. Has overhead. |
 
 ## Roblox Types
 
 NetFlow supports standard Roblox engine types for convenience.
 
-*   `inst`: Roblox Instance.
-*   `cframe`: Roblox CFrame.
-*   `color3`: Roblox Color3.
-*   `vec2`: Roblox Vector2.
-*   `vec3`: Roblox Vector3 (use `t.vec3`, not `t.vector3`).
+* `inst`: Roblox Instance reference.
+* `cframe`: Roblox CFrame.
+* `color3`: Roblox Color3.
+* `vec2`: Roblox Vector2.
+* `vec3`: Roblox Vector3.
 
 ## Example Usage
 
