@@ -1,6 +1,6 @@
 # NetFlow
 
-[![Wally](https://img.shields.io/badge/Wally-1.7.3-blue.svg)](https://wally.run/package/nazumah/netflow)
+[![Wally](https://img.shields.io/badge/Wally-1.7.4-blue.svg)](https://wally.run/package/nazumah/netflow)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Luau](https://img.shields.io/badge/Luau-Strict-blueviolet.svg)](https://luau-lang.org/)
 
@@ -26,8 +26,8 @@ Add the dependency to your `wally.toml`:
 
 ```toml
 [dependencies]
-NetFlow = "nazumah/netflow@1.7.3"
-Async = "nazumah/async@1.0.2"
+NetFlow = "nazumah/netflow@1.7.4"
+Async = "nazumah/async@1.0.3"
 ```
 
 ---

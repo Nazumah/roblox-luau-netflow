@@ -45,7 +45,7 @@ else
 	client.init()
 end
 
-return table.freeze({
+local Module = {
 	define_packet = define_packet,
 	define_invoke = define_invoke,
 	namespace = namespace,
@@ -90,4 +90,8 @@ return table.freeze({
 		enum = enum_type,
 		bitfield = bitfield,
 	}),
-})
+}
+
+export type NetFlow_ = typeof(Module)
+
+return table.freeze(Module)
